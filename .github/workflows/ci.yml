@@ -4,9 +4,13 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test-docker-smoke:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -14,6 +18,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
       - name: Install deps
         run: |
@@ -29,15 +34,51 @@ jobs:
         run: |
           docker compose build
 
-      - name: Docker smoke run (DUT + runner)
+      - name: Docker smoke run (DUT + runner + analytics)
+        shell: bash
         run: |
+          set -euo pipefail
+
           rm -rf runs || true
           mkdir -p runs
+
+          # Start DUT first (runner depends on it being healthy)
           docker compose up -d dut
+
+          # Run runner to completion (exit code is runner's)
           docker compose up --exit-code-from runner runner
-          latest=$(ls -1 runs | tail -n 1)
-          python -m mtap.cli.run_analytics --run-dir runs/$latest
-          test -f runs/$latest/qualification_report.html
+
+          # Pick latest run id (timestamps sort lexicographically)
+          latest="$(ls -1 runs | sort | tail -n 1)"
+          if [[ -z "${latest}" ]]; then
+            echo "No run directory created under ./runs"
+            docker compose logs dut runner || true
+            exit 1
+          fi
+          echo "Latest run: ${latest}"
+
+          # IMPORTANT: run analytics inside a container to avoid host PermissionError
+          docker compose run --rm --no-deps runner \
+            python -m mtap.cli.run_analytics --run-dir "/app/runs/${latest}"
+
+          # Assertions: report + analytics outputs exist on host
+          test -f "runs/${latest}/qualification_report.html"
+          test -f "runs/${latest}/events.jsonl"
+          test -f "runs/${latest}/events.csv"
+          test -f "runs/${latest}/results_summary.json"
+          test -f "runs/${latest}/coverage_matrix.csv"
+          test -d "runs/${latest}/analytics"
+
+      - name: Docker logs (on failure)
+        if: failure()
+        run: |
+          docker compose ps || true
+          docker compose logs --no-color dut runner || true
+
+      - name: Tear down containers
+        if: always()
+        run: |
+          docker compose down -v || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
