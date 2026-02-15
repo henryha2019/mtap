@@ -1,0 +1,9 @@
+requirements:
+  REQ-001:
+    title: "DUT shall respond to PING with identity (SN, FW, mode) and voltage."
+  REQ-002:
+    title: "DUT shall report temperature (degC) on READ_TEMP."
+  REQ-003:
+    title: "DUT shall report voltage (V) on READ_TEMP within nominal range."
+  REQ-004:
+    title: "DUT shall execute SELF_TEST and report pass/fail."

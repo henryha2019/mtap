@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e .
+
+      - name: Unit tests
+        run: |
+          pytest -q
+
+      - name: Docker build
+        run: |
+          docker compose build
+
+      - name: Docker smoke run (DUT + runner)
+        run: |
+          rm -rf runs || true
+          mkdir -p runs
+          docker compose up -d dut
+          docker compose up --exit-code-from runner runner
+          latest=$(ls -1 runs | tail -n 1)
+          python -m mtap.cli.run_analytics --run-dir runs/$latest
+          test -f runs/$latest/qualification_report.html
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mtap-artifacts
+          path: |
+            runs/**/qualification_report.html
+            runs/**/events.jsonl
+            runs/**/events.csv
+            runs/**/results_summary.json
+            runs/**/coverage_matrix.csv
+            runs/**/analytics/**

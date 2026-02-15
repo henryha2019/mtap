@@ -1,0 +1,164 @@
+[
+  {
+    "request": "SET_FAULT_PROFILE clean",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "profile": "clean"
+      },
+      "meta": {
+        "cmd": "SET_FAULT_PROFILE"
+      }
+    }
+  },
+  {
+    "request": "PING SN0001",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "sn": "SN0001",
+        "fw": "1.0.0",
+        "mode": "NORMAL",
+        "vbat_v": 12.0
+      },
+      "meta": {
+        "cmd": "PING"
+      }
+    }
+  },
+  {
+    "request": "READ_TEMP SN0001",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "sn": "SN0001",
+        "temp_c": 25.0183,
+        "vbat_v": 11.9776,
+        "cycles": 1
+      },
+      "meta": {
+        "cmd": "READ_TEMP"
+      }
+    }
+  },
+  {
+    "request": "READ_TEMP SN0001",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "sn": "SN0001",
+        "temp_c": 24.9809,
+        "vbat_v": 11.992,
+        "cycles": 2
+      },
+      "meta": {
+        "cmd": "READ_TEMP"
+      }
+    }
+  },
+  {
+    "request": "SET_TEMP SN0001 35.5",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "sn": "SN0001",
+        "temp_c": 35.5
+      },
+      "meta": {
+        "cmd": "SET_TEMP"
+      }
+    }
+  },
+  {
+    "request": "READ_TEMP SN0001",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "sn": "SN0001",
+        "temp_c": 35.5716,
+        "vbat_v": 12.0131,
+        "cycles": 3
+      },
+      "meta": {
+        "cmd": "READ_TEMP"
+      }
+    }
+  },
+  {
+    "request": "SELF_TEST SN0001",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "sn": "SN0001",
+        "self_test_ok": true,
+        "p_fail": 0.0102,
+        "cycles": 4
+      },
+      "meta": {
+        "cmd": "SELF_TEST"
+      }
+    }
+  },
+  {
+    "request": "SET_FAULT_PROFILE drift",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "profile": "drift"
+      },
+      "meta": {
+        "cmd": "SET_FAULT_PROFILE"
+      }
+    }
+  },
+  {
+    "request": "READ_TEMP SN0001",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "sn": "SN0001",
+        "temp_c": 35.5336,
+        "vbat_v": 12.0196,
+        "cycles": 5
+      },
+      "meta": {
+        "cmd": "READ_TEMP"
+      }
+    }
+  },
+  {
+    "request": "PING SN0001",
+    "response": {
+      "ok": true,
+      "error_code": null,
+      "message": "OK",
+      "data": {
+        "sn": "SN0001",
+        "fw": "1.0.0",
+        "mode": "NORMAL",
+        "vbat_v": 12.0
+      },
+      "meta": {
+        "cmd": "PING"
+      }
+    }
+  }
+]

@@ -1,0 +1,22 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tini \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /app
+
+# Install the package (src layout) so imports work without PYTHONPATH hacks
+RUN pip install --no-cache-dir -e .
+# Runner connects to DUT service by docker-compose DNS name
+ENV MTAP_HOST=dut
+ENV MTAP_DUT_PORT=9000
+ENV MTAP_TIMEOUT_S=2.0
+
+ENTRYPOINT ["tini","--"]
+CMD ["python","-m","mtap.cli.run_batch","--batch-id","DOCKER_BATCH","--station-id","DOCKER_STATION","--sns","SN0001","--stage","DVT","--plan","test_framework/test_plan.yaml"]

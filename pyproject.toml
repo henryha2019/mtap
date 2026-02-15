@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtap"
+version = "0.1.0"
+description = "Manufacturing Test Automation Platform (MTAP)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "pyyaml==6.0.2",
+  "pydantic==2.9.2",
+  "python-dotenv==1.0.1",
+  "jinja2==3.1.4",
+  "requests==2.32.3",
+  "pandas==2.2.2",
+  "matplotlib==3.9.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.3",
+  "ruff==0.6.9",
+  "mypy==1.11.2",
+]
+analytics = [
+  "pandas==2.2.2",
+  "matplotlib==3.9.2",
+]
+web = [
+  "fastapi==0.115.0",
+  "uvicorn==0.30.6",
+  "streamlit==1.38.0",
+]
+
+[project.scripts]
+mtap = "mtap.cli.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mtap = ["templates/*.html", "resources/*.yaml"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "src"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true

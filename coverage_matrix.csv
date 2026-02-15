@@ -1,0 +1,5 @@
+req_id,title,covered,mapped_steps
+REQ-001,"DUT shall respond to PING with identity (SN, FW, mode) and voltage.",Y,ping
+REQ-002,DUT shall report temperature (degC) on READ_TEMP.,Y,read_temp
+REQ-003,DUT shall report voltage (V) on READ_TEMP within nominal range.,Y,read_temp
+REQ-004,DUT shall execute SELF_TEST and report pass/fail.,Y,self_test

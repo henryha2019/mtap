@@ -1,0 +1,49 @@
+plan:
+  name: "MTAP Smoke Qualification"
+  version: 1
+
+station:
+  name: MTAP_SIM_STATION_01
+  stage: EVT
+  fw_expected: "1.0.0"
+
+batch:
+  sn_count: 3
+
+steps:
+  - id: ping
+    name: Ping DUT
+    cmd: PING
+    params: {}
+    timeout_s: 1.0
+    retries: 1
+    backoff_ms: 50
+    req_ids: ["REQ-001"]
+    stages: ["EVT", "DVT", "PVT", "MP"]
+
+  - id: read_temp
+    name: Read temperature (C)
+    cmd: READ_TEMP
+    params: {}
+    timeout_s: 2.0
+    retries: 2
+    backoff_ms: 100
+    limits:
+      field: temp_c
+      min: 10.0
+      max: 60.0
+    req_ids: ["REQ-002", "REQ-003"]
+    stages: ["EVT", "DVT", "PVT", "MP"]
+
+  - id: self_test
+    name: Self-test
+    cmd: SELF_TEST
+    params: {}
+    timeout_s: 3.0
+    retries: 1
+    backoff_ms: 150
+    limits:
+      field: self_test_ok
+      equals: true
+    req_ids: ["REQ-004"]
+    stages: ["DVT", "PVT", "MP"]

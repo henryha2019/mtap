@@ -1,0 +1,57 @@
+version: 2
+
+determinism:
+  seed: 12345
+
+device_defaults:
+  fw: "1.0.0"
+  mode: "NORMAL"         # NORMAL | SAFE
+  temp_c: 25.0
+  vbat_v: 12.0
+  temp_noise_sigma: 0.05
+  vbat_noise_sigma: 0.02
+  temp_drift_per_cycle_c: 0.000
+  vbat_drift_per_cycle_v: 0.000
+  self_test_fail_p_base: 0.01
+  burn_in_fail_slope: 0.00005
+
+fault_profiles:
+  clean:
+    default:
+      timeout: {p: 0.0, mode: "delay", delay_s: [0.0, 0.0]}
+      fail: {p: 0.0}
+      drift: {temp_offset_per_cycle_c: 0.0, vbat_offset_per_cycle_v: 0.0}
+      burn_in: {fail_p_multiplier_per_1k_cycles: 0.0, drift_multiplier_per_1k_cycles: 0.0}
+      busy: {min_interval_ms: 0, p: 0.0}
+    per_command: {}
+    intermittent_markov: {enabled: false}
+
+  factory-flaky:
+    default:
+      timeout: {p: 0.01, mode: "delay", delay_s: [2.2, 2.8]}
+      fail: {p: 0.02}
+      drift: {temp_offset_per_cycle_c: 0.002, vbat_offset_per_cycle_v: 0.0005}
+      burn_in: {fail_p_multiplier_per_1k_cycles: 0.15, drift_multiplier_per_1k_cycles: 0.25}
+      busy: {min_interval_ms: 80, p: 0.01}
+    per_command:
+      PING: {timeout: {p: 0.0}}
+      SELF_TEST: {fail: {p: 0.03}}
+    intermittent_markov: {enabled: false}
+
+  markov-flaky:
+    default:
+      timeout: {p: 0.0, mode: "delay", delay_s: [0.0, 0.0]}
+      fail: {p: 0.0}
+      drift: {temp_offset_per_cycle_c: 0.001, vbat_offset_per_cycle_v: 0.0002}
+      burn_in: {fail_p_multiplier_per_1k_cycles: 0.10, drift_multiplier_per_1k_cycles: 0.15}
+      busy: {min_interval_ms: 60, p: 0.005}
+    per_command: {}
+    intermittent_markov:
+      enabled: true
+      p_good_to_bad: 0.02
+      p_bad_to_good: 0.30
+      fail_p_bad_state: 0.60
+      timeout_p_bad_state: 0.10
+      timeout_delay_s: [2.2, 2.8]
+
+default_fault_profile: "clean"

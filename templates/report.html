@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MTAP Qualification Report — {{ run_id }}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 24px; color: #111; }
+    h1 { margin: 0 0 6px 0; }
+    .sub { color:#444; margin: 0 0 18px 0; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+    .k { color:#666; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .v { font-size: 16px; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #eee; padding: 8px 6px; text-align: left; vertical-align: top; }
+    th { font-size: 12px; color:#444; text-transform: uppercase; letter-spacing: .04em; }
+    .pass { color: #0a7; font-weight: 600; }
+    .fail { color: #c33; font-weight: 700; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+    .links a { margin-right: 12px; }
+    .small { font-size: 12px; color:#555; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h1>Qualification Report</h1>
+  <p class="sub">Run ID: <span class="mono">{{ run_id }}</span></p>
+
+  <div class="card">
+    <div class="grid">
+      <div><div class="k">Batch</div><div class="v mono">{{ batch_id }}</div></div>
+      <div><div class="k">Stage</div><div class="v"><span class="pill">{{ stage }}</span></div></div>
+      <div><div class="k">Station</div><div class="v mono">{{ station_id }}</div></div>
+      <div><div class="k">SN count</div><div class="v">{{ sn_count }}</div></div>
+      <div><div class="k">FW (unique)</div><div class="v mono">{{ fw_versions | join(", ") }}</div></div>
+      <div><div class="k">Overall</div><div class="v {% if overall_passed %}pass{% else %}fail{% endif %}">{{ "PASS" if overall_passed else "FAIL" }}</div></div>
+      <div><div class="k">Generated</div><div class="v mono">{{ generated_at }}</div></div>
+      <div><div class="k">Log schema</div><div class="v">v{{ log_schema_version }}</div></div>
+    </div>
+
+    <p class="links small" style="margin-top: 12px;">
+      Raw artifacts:
+      <a href="events.jsonl">events.jsonl</a>
+      <a href="events.csv">events.csv</a>
+      <a href="results_summary.json">results_summary.json</a>
+      {% if has_coverage %}<a href="coverage_matrix.csv">coverage_matrix.csv</a>{% endif %}
+    </p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">SN Summary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>SN</th>
+          <th>FW</th>
+          <th>Status</th>
+          <th>Failures</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in sn_rows %}
+        <tr>
+          <td class="mono">{{ row.sn }}</td>
+          <td class="mono">{{ row.fw }}</td>
+          <td class="{% if row.passed %}pass{% else %}fail{% endif %}">{{ "PASS" if row.passed else "FAIL" }}</td>
+          <td class="small">
+            {% if row.failures|length == 0 %}
+              —
+            {% else %}
+              {% for f in row.failures %}
+                <div><span class="mono">{{ f.step_id }}</span> — <span class="mono">{{ f.error_code }}</span></div>
+              {% endfor %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">Failure Summary</h2>
+    {% if fail_rows|length == 0 %}
+      <p class="pass">No failures.</p>
+    {% else %}
+      <table>
+        <thead>
+          <tr>
+            <th>SN</th>
+            <th>Step</th>
+            <th>Command</th>
+            <th>Error</th>
+            <th>Message</th>
+            <th>Attempts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in fail_rows %}
+          <tr>
+            <td class="mono">{{ f.sn }}</td>
+            <td class="mono">{{ f.step_id }}</td>
+            <td class="mono">{{ f.cmd }}</td>
+            <td class="mono">{{ f.error_code }}</td>
+            <td class="small">{{ f.message }}</td>
+            <td>{{ f.attempts }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 6px 0;">Step Duration Stats</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Count</th>
+          <th>p50 (ms)</th>
+          <th>p95 (ms)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in duration_rows %}
+        <tr>
+          <td class="mono">{{ s.test_step }}</td>
+          <td>{{ s.count }}</td>
+          <td>{{ s.p50 }}</td>
+          <td>{{ s.p95 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="small" style="margin-top:8px;">
+      Note: durations computed from <span class="mono">events.jsonl</span> across all attempts.
+    </p>
+  </div>
+</body>
+</html>
