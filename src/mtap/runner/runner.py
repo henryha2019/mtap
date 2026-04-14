@@ -17,6 +17,13 @@ from mtap.traceability.coverage import (
     write_csv,
 )
 
+# Error codes that warrant an automatic retry (transient DUT faults)
+_TRANSIENT_ERRORS = {"E_BUSY", "E_TIMEOUT"}
+
+# Default number of retries for the initial PING (fw discovery)
+_PING_RETRIES = 3
+_PING_BACKOFF_MS = 150
+
 
 @dataclass(frozen=True)
 class StepAttemptResult:
@@ -97,10 +104,16 @@ class TestRunner:
             self.sqlite = SQLiteStore(sqlite_db_path)
 
     def _ping_fw(self, sn: str) -> str:
-        res = self.client.call("PING", sn)
-        if res.ok:
-            fw = str(res.data.get("fw", "unknown"))
-            return fw
+        """Discover firmware version via PING with transient-error retry."""
+        for attempt in range(1, _PING_RETRIES + 1):
+            res = self.client.call("PING", sn)
+            if res.ok:
+                return str(res.data.get("fw", "unknown"))
+            # Retry on transient errors (E_BUSY, E_TIMEOUT)
+            if res.error_code in _TRANSIENT_ERRORS and attempt < _PING_RETRIES:
+                time.sleep(_PING_BACKOFF_MS / 1000.0)
+                continue
+            break
         return "unknown"
 
     def _evaluate_limits(self, step: StepSpec, data: Dict[str, Any]) -> Tuple[bool, Optional[str], Optional[str], Optional[Any], Optional[str]]:
@@ -205,8 +218,11 @@ class TestRunner:
             if passed:
                 break
 
-            if will_retry and backoff_ms > 0:
-                time.sleep(backoff_ms / 1000.0)
+            if will_retry:
+                # Use at least the rate-limit interval for backoff so the DUT
+                # doesn't immediately reject the retry with E_BUSY.
+                effective_backoff_ms = max(backoff_ms, 100)
+                time.sleep(effective_backoff_ms / 1000.0)
 
         self.client.timeout_s = original_timeout
         return last

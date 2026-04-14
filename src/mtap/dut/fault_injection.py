@@ -115,8 +115,8 @@ class FaultInjector:
         ctx = self._ctx_for(sn, cmd)
         now = time.time()
 
-        # Deterministic rate limit
-        if min_interval_ms > 0 and (now - ctx.last_cmd_ts) * 1000.0 < min_interval_ms:
+        # Deterministic rate limit: reject if called too soon after last SUCCESSFUL dispatch
+        if min_interval_ms > 0 and ctx.last_cmd_ts > 0 and (now - ctx.last_cmd_ts) * 1000.0 < min_interval_ms:
             return BusyDecision(True, E_BUSY, f"Rate-limited: min_interval_ms={min_interval_ms}")
 
         # Probabilistic BUSY
@@ -166,21 +166,29 @@ class FaultInjector:
 
     # ---- server-facing evaluation ----
     def evaluate(self, cmd: str, sn: str, cycles: int) -> Dict[str, Any]:
-        ctx = self._ctx_for(sn, cmd)
-        ctx.last_cmd_ts = time.time()
-
+        # Check BUSY *before* updating the timestamp — the rate limiter must
+        # compare against the last *successful* dispatch, not the current call.
         busy = self.should_busy(cmd, sn)
         if busy.should:
             return {"action": "RESPOND", "error_code": busy.error_code, "message": busy.message}
 
         fail = self.should_fail(cmd, sn, cycles)
         if fail.should:
+            # Update timestamp: the DUT accepted the command (even though it
+            # returned a simulated failure), so the rate-limiter should reset.
+            ctx = self._ctx_for(sn, cmd)
+            ctx.last_cmd_ts = time.time()
             return {"action": "RESPOND", "error_code": fail.error_code, "message": fail.message}
 
         to = self.should_timeout(cmd, sn, cycles)
         if to.should:
+            ctx = self._ctx_for(sn, cmd)
+            ctx.last_cmd_ts = time.time()
             if to.mode == "drop":
                 return {"action": "DROP", "delay_s": to.delay_s}
             return {"action": "DELAY", "delay_s": to.delay_s}
 
+        # Command will proceed normally — update timestamp
+        ctx = self._ctx_for(sn, cmd)
+        ctx.last_cmd_ts = time.time()
         return {"action": "PASS"}

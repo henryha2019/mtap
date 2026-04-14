@@ -1,0 +1,150 @@
+plan:
+  name: "MTAP Full Observability Plan"
+  version: 2
+
+station:
+  name: MTAP_SIM_STATION_01
+  stage: EVT
+  fw_expected: "1.0.0"
+
+batch:
+  sn_count: 2
+
+steps:
+
+  - id: read_temp_evt
+    name: "READ_TEMP: temp range check (EVT/DVT/PVT)"
+    cmd: READ_TEMP
+    params: {}
+    timeout_s: 2.0
+    retries: 1
+    backoff_ms: 100
+    limits:
+      field: temp_c
+      min: 10.0
+      max: 60.0
+    req_ids: ["REQ-002"]
+    stages: ["EVT", "DVT", "PVT"]
+
+  - id: read_vbat_evt
+    name: "READ_TEMP: vbat range check (EVT/DVT/PVT)"
+    cmd: READ_TEMP
+    params: {}
+    timeout_s: 2.0
+    retries: 1
+    backoff_ms: 100
+    limits:
+      field: vbat_v
+      min: 10.0
+      max: 13.5
+    req_ids: ["REQ-003"]
+    stages: ["EVT", "DVT", "PVT"]
+
+  # ----------------------------
+  # DVT+ behavior
+  # Exercises: stage gating (EVT skips), equals limit on boolean field.
+  # ----------------------------
+
+  - id: self_test_dvt
+    name: "SELF_TEST: must pass (DVT/PVT/MP)"
+    cmd: SELF_TEST
+    params: {}
+    timeout_s: 3.0
+    retries: 2
+    backoff_ms: 150
+    limits:
+      field: self_test_ok
+      equals: true
+    req_ids: ["REQ-004"]
+    stages: ["DVT", "PVT", "MP"]
+
+  # ----------------------------
+  # DVT+ BUSY + retry-recovery demo
+  # Run DUT with a profile that enforces min_interval_ms (e.g. markov-flaky).
+  # Step 1 likely passes, Step 2 can hit E_BUSY first attempt, then pass after backoff.
+  # Exercises: non-OK response path, will_retry/retry_reason logging, backoff behavior.
+  # ----------------------------
+
+  - id: ping_busy_probe_1
+    name: "PING: busy probe #1 (DVT/PVT/MP)"
+    cmd: PING
+    params: {}
+    timeout_s: 1.0
+    retries: 0
+    backoff_ms: 0
+    req_ids: ["REQ-001"]
+    stages: ["DVT", "PVT", "MP"]
+
+  - id: ping_busy_probe_2
+    name: "PING: busy probe #2 (expect BUSY then recover via retry)"
+    cmd: PING
+    params: {}
+    timeout_s: 1.0
+    retries: 1
+    backoff_ms: 120
+    req_ids: ["REQ-001"]
+    stages: ["DVT", "PVT", "MP"]
+
+  # ----------------------------
+  # MP-only “negative/edge path” pack
+  # Exercises: LIMIT_FAIL, E_BAD_ARGS, E_UNKNOWN_CMD, E_TIMEOUT + per-step timeout override.
+  # These are intentionally *not* production tests; they exist to observe framework behavior.
+  # ----------------------------
+
+  - id: mp_limit_fail_demo
+    name: "MP: force LIMIT_FAIL on temp (observe LIMIT_FAIL + retries)"
+    cmd: READ_TEMP
+    params: {}
+    timeout_s: 2.0
+    retries: 2
+    backoff_ms: 80
+    limits:
+      field: temp_c
+      min: 100.0
+      max: 110.0
+    req_ids: ["REQ-002"]
+    stages: ["MP"]
+
+  - id: mp_bad_args_demo
+    name: "MP: force E_BAD_ARGS (SET_TEMP missing arg)"
+    cmd: SET_TEMP
+    params: {}
+    timeout_s: 2.0
+    retries: 1
+    backoff_ms: 50
+    req_ids: ["REQ-001"]
+    stages: ["MP"]
+
+  - id: mp_unknown_cmd_demo
+    name: "MP: force E_UNKNOWN_CMD (unknown command)"
+    cmd: TOTALLY_NOT_A_CMD
+    params: {}
+    timeout_s: 2.0
+    retries: 1
+    backoff_ms: 50
+    req_ids: ["REQ-001"]
+    stages: ["MP"]
+
+  - id: mp_timeout_short
+    name: "MP: force E_TIMEOUT with short timeout (requires delayy fault profile)"
+    cmd: READ_TEMP
+    params: {}
+    timeout_s: 0.5
+    retries: 1
+    backoff_ms: 80
+    req_ids: ["REQ-002"]
+    stages: ["MP"]
+
+  - id: mp_timeout_long
+    name: "MP: recover by using longer timeout (same command, bigger timeout)"
+    cmd: READ_TEMP
+    params: {}
+    timeout_s: 4.0
+    retries: 0
+    backoff_ms: 0
+    limits:
+      field: temp_c
+      min: 10.0
+      max: 60.0
+    req_ids: ["REQ-002"]
+    stages: ["MP"]

@@ -15,9 +15,9 @@ steps:
     name: Ping DUT
     cmd: PING
     params: {}
-    timeout_s: 1.0
-    retries: 1
-    backoff_ms: 50
+    timeout_s: 2.0
+    retries: 3
+    backoff_ms: 200
     req_ids: ["REQ-001"]
     stages: ["EVT", "DVT", "PVT", "MP"]
 
@@ -25,9 +25,9 @@ steps:
     name: Read temperature (C)
     cmd: READ_TEMP
     params: {}
-    timeout_s: 2.0
-    retries: 2
-    backoff_ms: 100
+    timeout_s: 3.0
+    retries: 3
+    backoff_ms: 200
     limits:
       field: temp_c
       min: 10.0
@@ -39,9 +39,9 @@ steps:
     name: Self-test
     cmd: SELF_TEST
     params: {}
-    timeout_s: 3.0
-    retries: 1
-    backoff_ms: 150
+    timeout_s: 4.0
+    retries: 3
+    backoff_ms: 200
     limits:
       field: self_test_ok
       equals: true

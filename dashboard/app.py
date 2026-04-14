@@ -7,16 +7,6 @@ from typing import Any, Dict, Tuple
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
-import sys
-from pathlib import Path
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC_DIR = REPO_ROOT / "src"
-for p in (REPO_ROOT, SRC_DIR):
-    sp = str(p)
-    if sp not in sys.path:
-        sys.path.insert(0, sp)
-
 
 from dashboard.utils import file_fingerprint, parse_events_jsonl_bytes, compute_kpis, compute_unit_fty
 from mtap.analytics.pareto import pareto_failures

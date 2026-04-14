@@ -8,6 +8,9 @@ venv:
 	. .venv/bin/activate && $(PIP) install -r requirements-dev.txt
 	. .venv/bin/activate && $(PIP) install -e .
 
+lint:
+	. .venv/bin/activate && ruff check src tests
+
 test:
 	. .venv/bin/activate && pytest
 
